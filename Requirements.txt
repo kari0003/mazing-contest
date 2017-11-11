@@ -1,0 +1,47 @@
+MVP
+- Cross platform game engine without graphics
+  - Portable maze description object
+  - Portable game rules description object
+    - Map Size
+    - Initial obstacle count
+    - Initial obstacle placement hash
+    - Game mode & related info
+    - Timestamp or ID
+  - Hashing: Saveable & fully reproducable
+  - Detect impossible maze, and validate maze
+- Graphics for desktop
+  - Game simulation
+  - Editor graphics
+    - Game simulation (0 time) + grid
+    - Editor toolbar
+      - Select wall + remaining count
+      - Upgrade count (double click tooltip)
+      - 
+  - Infobar (game mode, and timers, remaining wall)
+  - Results modal (time accomplished, new game / back)
+  - Results leaderboard (time accomplished, placement, first places)
+- Editor
+  - select on click, show on hover, place on click
+  - show on hover + b, place on click
+  - upgrade on doubleclick
+  - finish button, confirm 
+  - detect impossible placement (on other wall)
+  - detect impossible maze, prevent placement
+  - detect insufficent wall, prevent placement
+  - detect insufficent upgrade, prevent upgrade.
+  - extra: Show impossible placement while hovering
+  - show grid
+- Offline mode:
+  - Generate game rules from timestamp
+  - Show edtior
+  - If time runs out / finished generate maze description and hide editor
+  - Show maze simulation
+  - Show results modal
+- Server
+  - Receive connection and respond game info
+  - Save user id (name) and ping
+  - Send new map to connected users
+  - Filter out not connected users try to reconnect them
+  - Wait for finished mazes
+  - Validate and Simulate all mazes
+  - Compose leaderboard, and send it
