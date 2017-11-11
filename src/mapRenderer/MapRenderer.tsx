@@ -88,7 +88,7 @@ export class MapRenderer extends React.Component<IMapRendererProps, IMapRenderer
     this.props.path.forEach(tile => {
       // Create gradient
       var grd = this.ctx.createLinearGradient(0, 400, 50, 0);
-      grd.addColorStop(0, 'yellow');
+      grd.addColorStop(0, 'teal');
       grd.addColorStop(1, 'green');
 
       // Fill with gradient
@@ -98,7 +98,7 @@ export class MapRenderer extends React.Component<IMapRendererProps, IMapRenderer
   }
 
   drawGrid() {
-    this.ctx.strokeStyle = 'brown';
+    this.ctx.strokeStyle = '#333333';
     for (let x = 0; x < this.props.gameInfo.mapTiles.x; x++) {
       this.drawLine(this.gridSize.x * x, 0, this.gridSize.x * x, this.mapDimensions.y);
     }

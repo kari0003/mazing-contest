@@ -1,5 +1,6 @@
 import * as React from 'react';
 import * as _ from 'lodash';
+import './Game.css';
 
 import { IVec2 } from '../utils/Types';
 import { PathFinder } from './PathFinder';
@@ -80,7 +81,7 @@ export class Game extends React.Component<IGameProps, IGameState> {
           path={this.path}
         /></span>
         <h2>{this.state.invalidMaze ? 'The maze is invalid!' : 'Valid Maze'}</h2>
-        <h3>{`Path length: ${this.path.length}.`}</h3>
+        <h3>{`Path length is ${this.path.length}.`}</h3>
       </div>
     );
   }
