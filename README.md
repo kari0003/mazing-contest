@@ -1,1 +1,0 @@
-mazing-contest
