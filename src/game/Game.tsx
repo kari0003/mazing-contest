@@ -69,6 +69,7 @@ export class Game extends React.Component<IGameProps, IGameState> {
   render () {
     return (
       <div className="Game">
+        <p>Click on the grid to create a maze</p>
         <span><MapRenderer
           mapDimensions={{ x: this.size, y: this.size }}
           gameInfo={{
