@@ -1,5 +1,6 @@
 import * as React from 'react';
 
+import { Wall } from '../wall';
 import { Vec2, IVec2 } from '../utils/Vec';
 import { EventManager } from '../eventManager';
 
@@ -7,6 +8,11 @@ export interface IMapRendererProps {
   mapDimensions: IVec2;
   eventManager: EventManager;
   gameInfo: IGameInfo;
+  volatile: {
+    wallToBe?: Vec2;
+    wallSuggestion?: Vec2 | null;
+    origin?: Vec2;
+  };
   path: IVec2[];
 }
 export interface IMapRendererState {}
@@ -15,6 +21,7 @@ interface IGameInfo {
   mapTiles: IVec2;
   mapPathing: boolean[][];
   path: IVec2[];
+  walls: Wall[];
 }
 
 export class MapRenderer extends React.Component<IMapRendererProps, IMapRendererState> {
@@ -27,7 +34,6 @@ export class MapRenderer extends React.Component<IMapRendererProps, IMapRenderer
 
   constructor(props: IMapRendererProps) {
     super(props);
-    console.log('props', props);
     this.mapDimensions = new Vec2(props.mapDimensions);
     this.gridSize = this.mapDimensions.divide(props.gameInfo.mapTiles);
   }
@@ -62,16 +68,18 @@ export class MapRenderer extends React.Component<IMapRendererProps, IMapRenderer
 
     this.clearCanvas();
 
-    this.drawPathing();
     this.drawTiles();
+    this.drawPathing();
     this.drawGrid();
+    this.drawWalls();
+    this.drawVolatile();
   }
 
   drawPathing() {
     // Create gradient
     var grd = this.ctx.createLinearGradient(0, 0, 400, 50);
-    grd.addColorStop(0, 'red');
-    grd.addColorStop(1, 'orange');
+    grd.addColorStop(0, 'rgba(255, 0, 0, 0.3)');
+    grd.addColorStop(1, 'rgba(255, 64, 0, 0.3)');
 
     // Fill with gradient
     this.ctx.fillStyle = grd;
@@ -98,6 +106,7 @@ export class MapRenderer extends React.Component<IMapRendererProps, IMapRenderer
   }
 
   drawGrid() {
+    this.ctx.lineWidth = 1;
     this.ctx.strokeStyle = '#333333';
     for (let x = 0; x < this.props.gameInfo.mapTiles.x; x++) {
       this.drawLine(this.gridSize.x * x, 0, this.gridSize.x * x, this.mapDimensions.y);
@@ -110,7 +119,51 @@ export class MapRenderer extends React.Component<IMapRendererProps, IMapRenderer
     this.drawLine(0, this.mapDimensions.y - 1, this.mapDimensions.x, this.mapDimensions.y - 1);
   }
 
+  drawWalls() {
+    for (let wall of this.props.gameInfo.walls) {
+      this.drawWall(wall.pos);
+    }
+  }
+
+  drawWall(pos: Vec2) {
+    const center = pos.multiply(this.gridSize).add(this.gridSize).add({ x: 0.5, y: 0.5 });
+    this.ctx.beginPath();
+    this.ctx.ellipse(center.x, center.y, this.gridSize.x - 2, this.gridSize.y - 2, 0, 0, 2 * Math.PI, false);
+    this.ctx.fillStyle = 'green';
+    this.ctx.fill();
+    this.ctx.lineWidth = 2;
+    this.ctx.strokeStyle = '#003300';
+    this.ctx.stroke();
+  }
+
+  drawVolatile() {
+    if (this.props.volatile.origin) {
+      const origin = this.props.volatile.origin.multiply(this.gridSize).add({ x: 0.5, y: 0.5 });
+      this.ctx.beginPath();
+      this.ctx.arc(origin.x, origin.y, 2, 0, 2 * Math.PI);
+      this.ctx.fillStyle = 'red';
+      this.ctx.fill();
+    }
+    // Draw Hover placement
+    if (this.props.volatile.wallSuggestion || this.props.volatile.wallToBe) {
+      const rectPos = this.props.volatile.wallSuggestion ?
+        this.props.volatile.wallSuggestion.multiply(this.gridSize).add({ x: 0.5, y: 0.5 }) :
+        this.props.volatile.wallToBe!.multiply(this.gridSize).add({ x: 0.5, y: 0.5 });
+      if (this.props.volatile.wallSuggestion) {
+        this.ctx.lineWidth = 2;
+        this.ctx.strokeStyle = 'green';
+      } else {
+        this.ctx.lineWidth = 2;
+        this.ctx.strokeStyle = 'red';
+      }
+      this.ctx.beginPath();
+      this.ctx.rect(rectPos.x, rectPos.y, this.gridSize.x * 2, this.gridSize.y * 2);
+      this.ctx.stroke();
+    }
+  }
+
   drawLine(x1: number, y1: number, x2: number, y2: number) {
+    this.ctx.beginPath();
     this.ctx.moveTo(x1 + 0.5, y1 + 0.5);
     this.ctx.lineTo(x2 + 0.5, y2 + 0.5);
     this.ctx.stroke();

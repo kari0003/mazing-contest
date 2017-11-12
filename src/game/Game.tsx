@@ -2,7 +2,8 @@ import * as React from 'react';
 import * as _ from 'lodash';
 import './Game.css';
 
-import { IVec2 } from '../utils/Types';
+import { IVec2, Vec2 } from '../utils/Vec';
+import { Wall } from '../wall';
 import { PathFinder } from './PathFinder';
 import { EventManager } from '../eventManager';
 import { MapRenderer, IMapRendererProps } from '../mapRenderer';
@@ -28,10 +29,17 @@ export class Game extends React.Component<IGameProps, IGameState> {
   public gridLength: IVec2 = { x: 30, y: 30 };
 
   public redtiles: IVec2[] = [];
+  public walls: Wall[] = [];
   public path: IVec2[] = [];
   public pathing: boolean[][] = [];
 
   rendererProps: IMapRendererProps;
+
+  volatile: {
+    wallToBe?: Vec2;
+    wallSuggestion?: Vec2 | null;
+    origin?: Vec2;
+  } = {};
 
   private eventManager: EventManager;
 
@@ -58,7 +66,6 @@ export class Game extends React.Component<IGameProps, IGameState> {
   }
 
   handleClick (event: {clientX: number, clientY: number}) {
-    console.log(event.clientX, event.clientY);
     const coords = this.eventManager.getEventCoords(event as MouseEvent);
     this.handleGameEvent(coords);
     this.path = this.findPathing();
@@ -76,8 +83,10 @@ export class Game extends React.Component<IGameProps, IGameState> {
             gameRef: this.gameRef,
             mapTiles: this.gridSize,
             mapPathing: this.pathing,
+            walls: this.walls,
             path: this.path,
           }}
+          volatile={this.volatile}
           eventManager={this.eventManager}
           path={this.path}
         /></span>
@@ -87,17 +96,49 @@ export class Game extends React.Component<IGameProps, IGameState> {
     );
   }
 
-  handleGameEvent(coord: IVec2) {
-    const x = Math.floor(coord.x / this.gridLength.x);
-    const y = Math.floor(coord.y / this.gridLength.y);
+  componentDidMount() {
+    this.path = this.findPathing();
+    this.setState({ invalidMaze: this.path.length === 0 });
+  }
 
-    if (_.find(this.redtiles, c => _.isEqual(c, { x, y }))) {
-      _.remove(this.redtiles, { x, y });
-      this.pathing[x][y] = true;
-    } else {
-      this.redtiles.push({ x, y });
-      this.pathing[x][y] = false;
+  handleGameEvent(coord: IVec2) {
+
+    const gridCoord = new Vec2(coord).divide(this.gridLength);
+    const suggestion = Wall.getSophisticatedWallPlacement(this.pathing, gridCoord);
+    if (!suggestion) {
+      return;
     }
+    const {x, y} = suggestion;
+    const old = false;
+    if (old) {
+      if (_.find(this.redtiles, c => _.isEqual(c, { x, y }))) {
+        _.remove(this.redtiles, { x, y });
+        this.pathing[x][y] = true;
+      } else {
+        this.redtiles.push({ x, y });
+        this.pathing[x][y] = false;
+      }
+    } else {
+      for (let wall of this.walls) {
+        if (_.isEqual({ x: wall.pos.x, y: wall.pos.y }, {x, y})) {
+          this.pathing = wall.clearPathing(this.pathing);
+          _.remove(this.walls, wall);
+          return;
+        }
+      }
+      if (Wall.checkPathing(this.pathing, {x, y})) {
+        const wall = new Wall({x, y});
+        this.pathing = wall.applyPathing(this.pathing);
+        this.walls.push(wall);
+      }
+    }
+  }
+
+  hoverWall(mousePos: Vec2) {
+    const gridPos = mousePos.divide(this.gridLength);
+    this.volatile.wallSuggestion = Wall.getSophisticatedWallPlacement(this.pathing, gridPos);
+    this.volatile.wallToBe = gridPos.apply(Math.round).subtract({x: 1, y: 1});
+    this.setState({ invalidMaze: this.path.length === 0 });
   }
 
   findPathing() {

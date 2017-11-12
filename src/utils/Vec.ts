@@ -48,4 +48,11 @@ export class Vec2 implements IVec2 {
       y: this.y * scale,
     });
   }
+
+  apply(func: Function) {
+    return new Vec2({
+      x: func(this.x),
+      y: func(this.y),
+    });
+  }
 }

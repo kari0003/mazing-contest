@@ -1,3 +1,4 @@
+import { Vec2 } from '../utils/Vec';
 import { Game } from '../game';
 
 export class EventManager {
@@ -27,10 +28,12 @@ export class EventManager {
     // console.log('mouse up');
   }
   onMouseMove(event: MouseEvent) {
+    const coord = new Vec2(this.getEventCoords(event as MouseEvent));
     // console.log('mouse move');
+    this.ref.hoverWall(coord);
   }
   onClick(event: MouseEvent) {
-    console.log('clicked');
+    // console.log('clicked');
     this.ref.handleClick(event);
   }
   onDoubleClick(event: MouseEvent) {
@@ -43,12 +46,11 @@ export class EventManager {
   // tslint:disable-next-line:no-any
   onSelectEvent(e: any) {
     const event = e as MouseEvent;
-    console.log('on select');
+    // console.log('on select');
     event.stopPropagation();
     return false;
   }
 
-  // tslint:disable-next-line:no-any
   getEventCoords(event: MouseEvent) {
     const rect = this.canvas.getBoundingClientRect();
     const coords = {
